@@ -1,4 +1,4 @@
-name: Destroy All (auth-serverless -> api -> db-infra -> k8s-infra)
+name: Destroy All (Fase 4 — auth-serverless-fase4 -> execution-service -> billing-service -> os-service -> db-infra-fase4 -> k8s-infra-fase4)
 
 # Ordem inversa do deploy_all.yml — cada repo depende dos SSM Parameters
 # publicados pelos que vêm depois dele nesta lista.
@@ -40,22 +40,32 @@ jobs:
           echo "::add-mask::${{ inputs.aws_session_token }}"
           echo "::add-mask::${{ secrets.ORCHESTRATOR_PAT }}"
 
-      - name: Destroy auth-serverless
+      - name: Destroy auth-serverless-fase4
         run: |
-          .github/scripts/run_and_wait.sh auth-serverless cd_destroy.yml \
+          .github/scripts/run_and_wait.sh auth-serverless-fase4 cd_destroy.yml \
             "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
 
-      - name: Destroy api
+      - name: Destroy execution-service
         run: |
-          .github/scripts/run_and_wait.sh api cd_destroy.yml \
+          .github/scripts/run_and_wait.sh execution-service cd_destroy.yml \
             "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
 
-      - name: Destroy db-infra
+      - name: Destroy billing-service
         run: |
-          .github/scripts/run_and_wait.sh db-infra cd_destroy.yml \
+          .github/scripts/run_and_wait.sh billing-service cd_destroy.yml \
             "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
 
-      - name: Destroy k8s-infra
+      - name: Destroy os-service
         run: |
-          .github/scripts/run_and_wait.sh k8s-infra cd_destroy.yml \
+          .github/scripts/run_and_wait.sh os-service cd_destroy.yml \
+            "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
+
+      - name: Destroy db-infra-fase4
+        run: |
+          .github/scripts/run_and_wait.sh db-infra-fase4 cd_destroy.yml \
+            "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
+
+      - name: Destroy k8s-infra-fase4
+        run: |
+          .github/scripts/run_and_wait.sh k8s-infra-fase4 cd_destroy.yml \
             "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"

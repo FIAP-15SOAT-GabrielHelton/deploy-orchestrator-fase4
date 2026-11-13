@@ -1,7 +1,7 @@
-name: Deploy All (k8s-infra -> db-infra -> api -> auth-serverless)
+name: Deploy All (Fase 4 — k8s-infra-fase4 -> db-infra-fase4 -> os-service -> billing-service -> execution-service -> auth-serverless-fase4)
 
 # Recebe as credenciais da sessão AWS Academy UMA ÚNICA VEZ e dispara/aguarda,
-# em sequência, o workflow "CD Deploy" de cada um dos 4 repositórios do
+# em sequência, o workflow "CD Deploy" de cada um dos 6 repositórios do
 # projeto. Interrompe a cadeia (falha rápido) se qualquer etapa não concluir
 # com sucesso.
 on:
@@ -42,22 +42,32 @@ jobs:
           echo "::add-mask::${{ inputs.aws_session_token }}"
           echo "::add-mask::${{ secrets.ORCHESTRATOR_PAT }}"
 
-      - name: Deploy k8s-infra
+      - name: Deploy k8s-infra-fase4
         run: |
-          .github/scripts/run_and_wait.sh k8s-infra cd_deploy.yml \
+          .github/scripts/run_and_wait.sh k8s-infra-fase4 cd_deploy.yml \
             "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
 
-      - name: Deploy db-infra
+      - name: Deploy db-infra-fase4
         run: |
-          .github/scripts/run_and_wait.sh db-infra cd_deploy.yml \
+          .github/scripts/run_and_wait.sh db-infra-fase4 cd_deploy.yml \
             "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
 
-      - name: Deploy api
+      - name: Deploy os-service
         run: |
-          .github/scripts/run_and_wait.sh api cd_deploy.yml \
+          .github/scripts/run_and_wait.sh os-service cd_deploy.yml \
             "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
 
-      - name: Deploy auth-serverless
+      - name: Deploy billing-service
         run: |
-          .github/scripts/run_and_wait.sh auth-serverless cd_deploy.yml \
+          .github/scripts/run_and_wait.sh billing-service cd_deploy.yml \
+            "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
+
+      - name: Deploy execution-service
+        run: |
+          .github/scripts/run_and_wait.sh execution-service cd_deploy.yml \
+            "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
+
+      - name: Deploy auth-serverless-fase4
+        run: |
+          .github/scripts/run_and_wait.sh auth-serverless-fase4 cd_deploy.yml \
             "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
