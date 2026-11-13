@@ -66,6 +66,12 @@ while true; do
       echo "::error::Job principal de ${FULL_REPO} falhou (conclusion=${JOB_CONCLUSION})."
       exit 1
     fi
+
+    # Os serviços têm um 2º job que se autodestrói após 2h. No deploy orquestrado quem decide
+    # a hora de destruir é o deploy_all.yml (por inatividade), então cancelamos essa espera.
+    if [ "$WORKFLOW_FILE" = "cd_deploy.yml" ]; then
+      gh run cancel "$RUN_ID" --repo "$FULL_REPO" >/dev/null 2>&1 || true
+    fi
     break
   fi
 

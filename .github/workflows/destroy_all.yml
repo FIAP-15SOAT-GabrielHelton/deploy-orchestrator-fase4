@@ -18,9 +18,11 @@ on:
         required: true
         type: string
 
+# Mesmo grupo do deploy_all.yml, com cancelamento: disparar o destroy manual interrompe um
+# Deploy All em andamento (inclusive a espera da autodestruição por inatividade).
 concurrency:
   group: oficina-mecanica-deploy-all
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   destroy:
