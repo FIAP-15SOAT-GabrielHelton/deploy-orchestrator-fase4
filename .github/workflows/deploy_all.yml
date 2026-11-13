@@ -31,7 +31,13 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.ORCHESTRATOR_PAT }}
       ORG: FIAP-15SOAT-GabrielHelton
+    outputs:
+      started_at: ${{ steps.clock.outputs.started_at }}
     steps:
+      - name: Record Start Time
+        id: clock
+        run: echo "started_at=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Checkout Code
         uses: actions/checkout@v5
 
@@ -71,3 +77,44 @@ jobs:
         run: |
           .github/scripts/run_and_wait.sh auth-serverless-fase4 cd_deploy.yml \
             "${{ inputs.aws_access_key_id }}" "${{ inputs.aws_secret_access_key }}" "${{ inputs.aws_session_token }}"
+
+  # Destrói tudo sozinho quando o ambiente fica ocioso (30 min sem chamadas nos serviços) ou no
+  # teto de 3h desde o início do deploy — antes de as credenciais da AWS Academy (~4h) vencerem.
+  # Para manter o ambiente por mais tempo, cancele esta execução; para destruir antes, rode o
+  # Destroy All (que cancela esta espera).
+  auto-destroy:
+    name: Auto Destroy (idle or time limit)
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.ORCHESTRATOR_PAT }}
+      ORG: FIAP-15SOAT-GabrielHelton
+      AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+      AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+      AWS_SESSION_TOKEN: ${{ inputs.aws_session_token }}
+      AWS_DEFAULT_REGION: us-east-1
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Mask Sensitive Credentials
+        run: |
+          echo "::add-mask::$AWS_ACCESS_KEY_ID"
+          echo "::add-mask::$AWS_SECRET_ACCESS_KEY"
+          echo "::add-mask::$AWS_SESSION_TOKEN"
+          echo "::add-mask::$GH_TOKEN"
+
+      - name: Wait Until Idle or Time Limit
+        env:
+          DEPLOY_STARTED_AT: ${{ needs.deploy.outputs.started_at }}
+          IDLE_MINUTES: 30
+          MAX_MINUTES: 180
+        run: .github/scripts/wait_until_idle.sh
+
+      # Mesma ordem do destroy_all.yml.
+      - name: Destroy All
+        run: |
+          for repo in auth-serverless-fase4 execution-service billing-service os-service db-infra-fase4 k8s-infra-fase4; do
+            .github/scripts/run_and_wait.sh "$repo" cd_destroy.yml \
+              "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" "$AWS_SESSION_TOKEN"
+          done
